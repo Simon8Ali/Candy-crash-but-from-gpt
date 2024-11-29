@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Candy Crush</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f7f7f7;
+      margin: 0;
+    }
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(8, 60px);
+      grid-template-rows: repeat(8, 60px);
+      gap: 2px;
+      background-color: #444;
+      padding: 5px;
+    }
+    .candy {
+      width: 60px;
+      height: 60px;
+      border-radius: 10%;
+      cursor: pointer;
+    }
+    .candy[data-color="red"] { background-color: red; }
+    .candy[data-color="yellow"] { background-color: yellow; }
+    .candy[data-color="green"] { background-color: green; }
+    .candy[data-color="blue"] { background-color: blue; }
+    .candy[data-color="orange"] { background-color: orange; }
+  </style>
+</head>
+<body>
+  <div id="game-board"></div>
+
+  <script>
+    const board = document.getElementById('game-board');
+    const colors = ["red", "yellow", "green", "blue", "orange"];
+    const width = 8;
+    let candies = [];
+
+    function createBoard() {
+      for (let i = 0; i < width * width; i++) {
+        const candy = document.createElement('div');
+        candy.setAttribute('draggable', true);
+        candy.classList.add('candy');
+        let randomColor = colors[Math.floor(Math.random() * colors.length)];
+        candy.setAttribute('data-color', randomColor);
+        board.appendChild(candy);
+        candies.push(candy);
+      }
+    }
+    createBoard();
+
+    let draggedCandy, replacedCandy;
+    let draggedCandyIndex, replacedCandyIndex;
+
+    candies.forEach(candy => {
+      candy.addEventListener('dragstart', dragStart);
+      candy.addEventListener('dragend', dragEnd);
+      candy.addEventListener('dragover', dragOver);
+      candy.addEventListener('dragenter', dragEnter);
+      candy.addEventListener('drop', dragDrop);
+    });
+
+    function dragStart() {
+      draggedCandy = this;
+      draggedCandyIndex = Array.from(board.children).indexOf(this);
+    }
+
+    function dragOver(e) {
+      e.preventDefault();
+    }
+
+    function dragEnter(e) {
+      e.preventDefault();
+    }
+
+    function dragDrop() {
+      replacedCandy = this;
+      replacedCandyIndex = Array.from(board.children).indexOf(this);
+    }
+
+    function dragEnd() {
+      const validMoves = [
+        draggedCandyIndex - 1,
+        draggedCandyIndex + 1,
+        draggedCandyIndex - width,
+        draggedCandyIndex + width
+      ];
+
+      const isValidMove = validMoves.includes(replacedCandyIndex);
+      if (isValidMove && replacedCandy) {
+        swapCandies();
+        checkMatches();
+      } else {
+        resetSwap();
+      }
+    }
+
+    function swapCandies() {
+      let draggedColor = draggedCandy.getAttribute('data-color');
+      let replacedColor = replacedCandy.getAttribute('data-color');
+      draggedCandy.setAttribute('data-color', replacedColor);
+      draggedCandy.style.backgroundColor = replacedColor;
+      replacedCandy.setAttribute('data-color', draggedColor);
+      replacedCandy.style.backgroundColor = draggedColor;
+    }
+
+    function resetSwap() {
+      draggedCandy = null;
+      replacedCandy = null;
+    }
+
+    function checkMatches() {
+      for (let i = 0; i < width * width; i++) {
+        if (i % width < width - 2) {
+          let row = [i, i + 1, i + 2];
+          let color = candies[i].getAttribute('data-color');
+          if (color && row.every(index => candies[index].getAttribute('data-color') === color)) {
+            row.forEach(index => {
+              candies[index].setAttribute('data-color', "");
+              candies[index].style.backgroundColor = "";
+            });
+          }
+        }
+        if (i < width * (width - 2)) {
+          let col = [i, i + width, i + 2 * width];
+          let color = candies[i].getAttribute('data-color');
+          if (color && col.every(index => candies[index].getAttribute('data-color') === color)) {
+            col.forEach(index => {
+              candies[index].setAttribute('data-color', "");
+              candies[index].style.backgroundColor = "";
+            });
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>
